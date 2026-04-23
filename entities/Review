@@ -1,0 +1,36 @@
+{
+  "name": "Review",
+  "type": "object",
+  "properties": {
+    "item_id": {
+      "type": "string",
+      "description": "\u5173\u8054\u5546\u54c1ID"
+    },
+    "rating": {
+      "type": "number",
+      "description": "\u8bc4\u5206 1-5"
+    },
+    "content": {
+      "type": "string",
+      "description": "\u8bc4\u4ef7\u5185\u5bb9"
+    },
+    "receipt_photo_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u6536\u8d27\u5b9e\u62cd\u56fe"
+    },
+    "outfit_photo_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u7a7f\u642d\u51fa\u7247\u56fe"
+    }
+  },
+  "required": [
+    "item_id",
+    "rating"
+  ]
+}
