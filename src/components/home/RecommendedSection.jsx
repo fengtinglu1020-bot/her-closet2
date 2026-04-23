@@ -1,15 +1,27 @@
-import React from 'react';
-import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
-import ItemCard from './ItemCard';
-import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
+import React, { useEffect, useState } from 'react'
+import ItemCard from './ItemCard'
+import { Button } from '@/components/ui/button'
+import { RefreshCw } from 'lucide-react'
 
 export default function RecommendedSection() {
-  const { data: items = [], isLoading, refetch } = useQuery({
-    queryKey: ['recommended-items'],
-    queryFn: () => base44.entities.Item.list('-created_date', 8),
-  });
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const loadItems = () => {
+    try {
+      const savedItems = JSON.parse(localStorage.getItem('items') || '[]')
+      setItems(savedItems)
+    } catch (err) {
+      console.error('读取数据失败', err)
+      setItems([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadItems()
+  }, [])
 
   return (
     <section className="py-16 sm:py-20">
@@ -23,18 +35,19 @@ export default function RecommendedSection() {
               每件都附直拍图 + 出片图
             </p>
           </div>
+
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => refetch()}
+            onClick={loadItems}
             className="text-muted-foreground hover:text-foreground"
           >
             <RefreshCw className="w-4 h-4 mr-1.5" />
-            换一批
+            刷新
           </Button>
         </div>
 
-        {isLoading ? (
+        {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="animate-pulse">
@@ -58,5 +71,5 @@ export default function RecommendedSection() {
         )}
       </div>
     </section>
-  );
+  )
 }
