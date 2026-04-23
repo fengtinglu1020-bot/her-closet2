@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Menu, X, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User } from 'lucide-react';
+import { Search, Menu, X, Sparkles, User } from 'lucide-react';
 
 export default function Navbar({ onPostItem }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -62,13 +61,21 @@ export default function Navbar({ onPostItem }) {
             <button className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary transition-colors">
               <Search className="w-4 h-4" />
             </button>
-            <Button
-              onClick={onPostItem}
-              className="h-9 px-5 rounded-full bg-foreground text-background hover:bg-foreground/90 text-sm font-medium"
+
+            <Link
+              to="/profile"
+              className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary transition-colors"
             >
-              发布闲置
-            </Button>
-          </div>
+              <User className="w-4 h-4" />
+            </Link>
+
+            <Button
+    onClick={onPostItem}
+    className="h-9 px-5 rounded-full bg-foreground text-background hover:bg-foreground/90 text-sm font-medium"
+  >
+    发布闲置
+  </Button>
+</div>
 
           <button
             className="md:hidden p-2 text-foreground"
