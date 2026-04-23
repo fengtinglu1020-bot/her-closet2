@@ -322,4 +322,3 @@ function ImageUploadField({ label, subtitle, images, onUpload, onRemove, uploadi
     </div>
   );
 }
-}
