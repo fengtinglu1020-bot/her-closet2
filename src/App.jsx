@@ -10,6 +10,7 @@ import ItemDetail from './pages/ItemDetail';
 import InspirationDetail from './pages/InspirationDetail'
 import DestinationDetail from './pages/DestinationDetail'
 import Profile from './pages/Profile'
+import Orders from './pages/Orders'
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -43,6 +44,7 @@ const AuthenticatedApp = () => {
       <Route path="/inspiration/:slug" element={<InspirationDetail />} />
       <Route path="/destination/:slug" element={<DestinationDetail />} />
       <Route path="/profile" element={<Profile />} />
+      <Route path="/orders" element={<Orders />} />
     </Routes>
   );
 };
