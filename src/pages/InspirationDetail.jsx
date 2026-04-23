@@ -1,90 +1,47 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, MapPin, Camera, Sparkles } from 'lucide-react';
 import ItemCard from '@/components/home/ItemCard';
-import { Button } from '@/components/ui/button';
 
-const INSPIRATION_CONFIG = {
-  sanya: {
-    title: '三亚海边穿搭分享',
-    subtitle: '适合海边拍照、度假和轻松出片的单品',
-    scene: '海边',
+const INSPIRATION_POSTS = {
+  'sanya-diary': {
+    title: '三亚海边出片日记',
+    subtitle: '买法式碎花裙之后，我带它去了海边，真的很适合傍晚和风大的时候拍照。',
+    image:
+      'https://media.base44.com/images/public/69e9a85f2f4419a5ac4fc769/05d384165_generated_d7ed6259.png',
+    location: '三亚 · 海边',
+    mood: '温柔、轻盈、适合海风和日落',
+    sceneTag: '海边',
+    content:
+      '这套衣服最让我惊喜的是，它不是那种只能在照片里好看的裙子，而是真的穿起来会让人很想去旅行的那种。海边风一吹，裙摆会动，照片出来特别轻松，不用很刻意摆动作也很好看。',
   },
-  sunset: {
-    title: '日落海滩拍照日记',
-    subtitle: '适合夕阳、暖色氛围和海滩场景的穿搭',
-    scene: '日落',
+  'sunset-diary': {
+    title: '日落海滩拍照灵感',
+    subtitle: '白色吊带裙在夕阳下会很出片，尤其适合暖色调和逆光氛围。',
+    image:
+      'https://media.base44.com/images/public/69e9a85f2f4419a5ac4fc769/31b9194dc_generated_2da471ec.png',
+    location: '海边 · 日落',
+    mood: '暖调、松弛、很适合拍剪影',
+    sceneTag: '日落',
+    content:
+      '如果是去海边看日落，我会优先选白色或者浅色系。因为夕阳本身已经很有颜色了，衣服越简单，越容易把整个人显得很干净。拍照的时候可以多拍走路、回头、侧脸，氛围会比直直站着更自然。',
   },
-  bali: {
-    title: '巴厘岛度假穿搭日记',
-    subtitle: '适合热带度假、酒店和花园场景的搭配',
-    scene: '度假村',
+  'bali-diary': {
+    title: '巴厘岛度假穿搭记录',
+    subtitle: '热带植物、酒店花园、度假风套装，真的很适合这种目的地。',
+    image:
+      'https://media.base44.com/images/public/69e9a85f2f4419a5ac4fc769/b375de800_generated_fc505c93.png',
+    location: '巴厘岛 · 度假村',
+    mood: '热带、松弛、有一点精致感',
+    sceneTag: '度假村',
+    content:
+      '这种度假场景里，我觉得最重要的不是穿得多复杂，而是颜色和材质要对。只要衣服本身足够轻盈，再配一点度假感配饰，整个人就会很像在“旅行故事”里面，而不是普通游客照。',
   },
 };
 
-const CATEGORIES = ['全部', '裙子', '上衣', '下装', '鞋子', '配饰'];
-
-function inferCategory(item) {
-  const text = `${item.name || ''} ${(item.style_tags || []).join(' ')}`
-    .toLowerCase();
-
-  if (
-    text.includes('裙') ||
-    text.includes('dress')
-  ) {
-    return '裙子';
-  }
-
-  if (
-    text.includes('上衣') ||
-    text.includes('衬衫') ||
-    text.includes('吊带') ||
-    text.includes('背心') ||
-    text.includes('t恤') ||
-    text.includes('毛衣') ||
-    text.includes('top')
-  ) {
-    return '上衣';
-  }
-
-  if (
-    text.includes('裤') ||
-    text.includes('半裙') ||
-    text.includes('短裤') ||
-    text.includes('牛仔裤') ||
-    text.includes('下装')
-  ) {
-    return '下装';
-  }
-
-  if (
-    text.includes('鞋') ||
-    text.includes('凉鞋') ||
-    text.includes('高跟') ||
-    text.includes('靴')
-  ) {
-    return '鞋子';
-  }
-
-  if (
-    text.includes('包') ||
-    text.includes('耳环') ||
-    text.includes('项链') ||
-    text.includes('帽') ||
-    text.includes('墨镜') ||
-    text.includes('配饰')
-  ) {
-    return '配饰';
-  }
-
-  return '全部';
-}
-
 export default function InspirationDetail() {
   const { slug } = useParams();
-  const [activeCategory, setActiveCategory] = useState('全部');
-
-  const config = INSPIRATION_CONFIG[slug];
+  const post = INSPIRATION_POSTS[slug];
 
   const allItems = useMemo(() => {
     try {
@@ -95,11 +52,16 @@ export default function InspirationDetail() {
     }
   }, []);
 
-  if (!config) {
+  const relatedItems = useMemo(() => {
+    if (!post) return [];
+    return allItems.filter((item) => item.scene_tags?.includes(post.sceneTag));
+  }, [allItems, post]);
+
+  if (!post) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <p className="text-lg text-muted-foreground">专题不存在</p>
+          <p className="text-lg text-muted-foreground">这篇晒单不存在</p>
           <Link to="/" className="text-accent underline mt-2 inline-block">
             返回首页
           </Link>
@@ -108,18 +70,9 @@ export default function InspirationDetail() {
     );
   }
 
-  const sceneItems = allItems.filter((item) =>
-    item.scene_tags?.includes(config.scene)
-  );
-
-  const filteredItems =
-    activeCategory === '全部'
-      ? sceneItems
-      : sceneItems.filter((item) => inferCategory(item) === activeCategory);
-
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <Link
           to="/"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
@@ -128,41 +81,78 @@ export default function InspirationDetail() {
           返回首页
         </Link>
 
-        <div className="mb-8">
-          <h1 className="font-display text-4xl sm:text-5xl font-black tracking-tight uppercase">
-            {config.title}
-          </h1>
-          <p className="mt-3 text-sm text-muted-foreground font-serif italic">
-            {config.subtitle}
-          </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+          <div className="rounded-3xl overflow-hidden bg-secondary">
+            <img
+              src={post.image}
+              alt={post.title}
+              className="w-full aspect-[4/5] object-cover"
+            />
+          </div>
+
+          <div className="pt-2">
+            <div className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground mb-4">
+              买家出片
+            </div>
+
+            <h1 className="font-display text-4xl sm:text-5xl font-black tracking-tight uppercase leading-tight">
+              {post.title}
+            </h1>
+
+            <p className="mt-4 text-base text-muted-foreground font-serif italic leading-relaxed">
+              {post.subtitle}
+            </p>
+
+            <div className="mt-6 space-y-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                <span>{post.location}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                <span>{post.mood}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Camera className="w-4 h-4" />
+                <span>适合旅行拍照、氛围感出片</span>
+              </div>
+            </div>
+
+            <div className="mt-8 rounded-2xl bg-secondary/50 border border-border/50 p-5">
+              <p className="text-sm leading-7 text-foreground/90">
+                {post.content}
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-8">
-          {CATEGORIES.map((category) => (
-            <Button
-              key={category}
-              type="button"
-              variant={activeCategory === category ? 'default' : 'outline'}
-              onClick={() => setActiveCategory(category)}
-              className="rounded-full"
-            >
-              {category}
-            </Button>
-          ))}
-        </div>
+        <div className="mt-16">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <h2 className="font-display text-3xl sm:text-4xl font-black tracking-tight uppercase">
+                同场景推荐
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground font-serif italic">
+                这些商品也很适合类似场景出片
+              </p>
+            </div>
+          </div>
 
-        {filteredItems.length === 0 ? (
-          <div className="py-20 text-center text-muted-foreground">
-            <p className="text-lg">这个专题下暂时还没有商品</p>
-            <p className="text-sm mt-2">先去发布一些相关场景的衣服吧</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {filteredItems.map((item, index) => (
-              <ItemCard key={item.id} item={item} index={index} />
-            ))}
-          </div>
-        )}
+          {relatedItems.length === 0 ? (
+            <div className="py-16 text-center text-muted-foreground">
+              <p className="text-lg">这个场景下暂时还没有可推荐的商品</p>
+              <p className="text-sm mt-2">你可以先去发布一些相关场景的衣服</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {relatedItems.map((item, index) => (
+                <ItemCard key={item.id} item={item} index={index} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
