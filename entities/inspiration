@@ -1,0 +1,33 @@
+{
+  "name": "Inspiration",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "\u6807\u9898"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u63cf\u8ff0"
+    },
+    "cover_url": {
+      "type": "string",
+      "description": "\u5c01\u9762\u56fe\u7247"
+    },
+    "content": {
+      "type": "string",
+      "description": "\u5185\u5bb9"
+    },
+    "location": {
+      "type": "string",
+      "description": "\u5730\u70b9"
+    },
+    "outfit_tips": {
+      "type": "string",
+      "description": "\u7a7f\u642d\u5efa\u8bae"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}
