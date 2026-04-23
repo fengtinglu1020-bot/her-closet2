@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Menu, X, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { User } from 'lucide-react';
 
 export default function Navbar({ onPostItem }) {
   const [mobileOpen, setMobileOpen] = useState(false);
