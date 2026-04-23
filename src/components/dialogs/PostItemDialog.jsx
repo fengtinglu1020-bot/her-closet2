@@ -10,8 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Upload, Loader2, X } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
-import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 const STYLE_TAGS = ['法式', 'Y2K', 'Boho', '复古', '甜美', '休闲'];
@@ -19,71 +17,125 @@ const SCENE_TAGS = ['海边', '日落', '城市街拍', '山野', '度假村', '
 const SEASON_TAGS = ['春', '夏', '秋', '冬'];
 
 export default function PostItemDialog({ open, onOpenChange }) {
-  const [form, setForm] = useState({
-    name: '', price: '', size: '', wear_count: '', wash_count: '',
-    location: '', style_tags: [], scene_tags: [], season_tags: [],
-    photo_urls: [], outfit_urls: [],
-  });
-  const [uploading, setUploading] = useState(false);
+  const emptyForm = {
+    name: '',
+    price: '',
+    size: '',
+    wear_count: '',
+    wash_count: '',
+    location: '',
+    style_tags: [],
+    scene_tags: [],
+    season_tags: [],
+    photo_urls: [],
+    outfit_urls: [],
+  };
+
+  const [form, setForm] = useState(emptyForm);
+  const [uploadingField, setUploadingField] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const queryClient = useQueryClient();
 
   const toggleTag = (field, tag) => {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       [field]: prev[field].includes(tag)
-        ? prev[field].filter(t => t !== tag)
-        : [...prev[field], tag]
+        ? prev[field].filter((t) => t !== tag)
+        : [...prev[field], tag],
     }));
   };
 
-  const handleUpload = async (field) => {
+  const handleUpload = (field) => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
     input.multiple = true;
+
     input.onchange = async (e) => {
-      setUploading(true);
-      const files = Array.from(e.target.files);
-      const urls = [];
-      for (const file of files) {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-        urls.push(file_url);
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+
+      try {
+        setUploadingField(field);
+
+        const urls = await Promise.all(
+          files.map(
+            (file) =>
+              new Promise((resolve, reject) => {
+                const reader = new FileReader();
+
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error('图片读取失败'));
+                reader.readAsDataURL(file);
+              })
+          )
+        );
+
+        setForm((prev) => ({
+          ...prev,
+          [field]: [...prev[field], ...urls],
+        }));
+      } catch (error) {
+        console.error(error);
+        toast.error('图片上传失败，请重试');
+      } finally {
+        setUploadingField('');
       }
-      setForm(prev => ({ ...prev, [field]: [...prev[field], ...urls] }));
-      setUploading(false);
     };
+
     input.click();
   };
 
   const removeImage = (field, idx) => {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
-      [field]: prev[field].filter((_, i) => i !== idx)
+      [field]: prev[field].filter((_, i) => i !== idx),
     }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!form.name || !form.price || !form.size) {
       toast.error('请填写必填项');
       return;
     }
-    setSubmitting(true);
-    await base44.entities.Item.create({
-      ...form,
-      price: parseFloat(form.price),
-      wear_count: form.wear_count ? parseInt(form.wear_count) : 0,
-      wash_count: form.wash_count ? parseInt(form.wash_count) : 0,
-    });
-    queryClient.invalidateQueries({ queryKey: ['recommended-items'] });
-    toast.success('发布成功！');
-    setSubmitting(false);
-    onOpenChange(false);
-    setForm({
-      name: '', price: '', size: '', wear_count: '', wash_count: '',
-      location: '', style_tags: [], scene_tags: [], season_tags: [],
-      photo_urls: [], outfit_urls: [],
-    });
+
+    if (form.photo_urls.length === 0) {
+      toast.error('请至少上传一张直拍图');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      const newItem = {
+        id: Date.now(),
+        name: form.name.trim(),
+        price: parseFloat(form.price),
+        size: form.size.trim(),
+        wear_count: form.wear_count ? parseInt(form.wear_count, 10) : 0,
+        wash_count: form.wash_count ? parseInt(form.wash_count, 10) : 0,
+        location: form.location.trim(),
+        style_tags: form.style_tags,
+        scene_tags: form.scene_tags,
+        season_tags: form.season_tags,
+        photo_urls: form.photo_urls,
+        outfit_urls: form.outfit_urls,
+        created_at: new Date().toISOString(),
+      };
+
+      const oldItems = JSON.parse(localStorage.getItem('items') || '[]');
+      const updatedItems = [newItem, ...oldItems];
+
+      localStorage.setItem('items', JSON.stringify(updatedItems));
+
+      toast.success('发布成功！');
+      setForm(emptyForm);
+      onOpenChange(false);
+    } catch (error) {
+      console.error(error);
+      toast.error('发布失败，请重试');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -94,7 +146,6 @@ export default function PostItemDialog({ open, onOpenChange }) {
         </DialogHeader>
 
         <div className="space-y-5 mt-2">
-          {/* Name */}
           <div>
             <Label className="text-sm font-medium">商品名称 *</Label>
             <Input
@@ -105,7 +156,6 @@ export default function PostItemDialog({ open, onOpenChange }) {
             />
           </div>
 
-          {/* Price + Size */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-sm font-medium">价格 *</Label>
@@ -128,7 +178,6 @@ export default function PostItemDialog({ open, onOpenChange }) {
             </div>
           </div>
 
-          {/* Wear + Wash */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-sm font-medium">穿着次数</Label>
@@ -152,7 +201,6 @@ export default function PostItemDialog({ open, onOpenChange }) {
             </div>
           </div>
 
-          {/* Location */}
           <div>
             <Label className="text-sm font-medium">出片地点</Label>
             <Input
@@ -163,28 +211,42 @@ export default function PostItemDialog({ open, onOpenChange }) {
             />
           </div>
 
-          {/* Tags */}
-          <TagGroup label="风格标签" tags={STYLE_TAGS} selected={form.style_tags} onToggle={(t) => toggleTag('style_tags', t)} />
-          <TagGroup label="出片场景" tags={SCENE_TAGS} selected={form.scene_tags} onToggle={(t) => toggleTag('scene_tags', t)} />
-          <TagGroup label="适合季节" tags={SEASON_TAGS} selected={form.season_tags} onToggle={(t) => toggleTag('season_tags', t)} />
+          <TagGroup
+            label="风格标签"
+            tags={STYLE_TAGS}
+            selected={form.style_tags}
+            onToggle={(t) => toggleTag('style_tags', t)}
+          />
 
-          {/* Photo Upload */}
+          <TagGroup
+            label="出片场景"
+            tags={SCENE_TAGS}
+            selected={form.scene_tags}
+            onToggle={(t) => toggleTag('scene_tags', t)}
+          />
+
+          <TagGroup
+            label="适合季节"
+            tags={SEASON_TAGS}
+            selected={form.season_tags}
+            onToggle={(t) => toggleTag('season_tags', t)}
+          />
+
           <ImageUploadField
             label="直拍图 *（实物平铺或挂拍）"
             images={form.photo_urls}
             onUpload={() => handleUpload('photo_urls')}
             onRemove={(i) => removeImage('photo_urls', i)}
-            uploading={uploading}
+            uploading={uploadingField === 'photo_urls'}
           />
 
-          {/* Outfit Upload */}
           <ImageUploadField
             label="穿搭出片图（你的穿搭效果）"
             subtitle="帮助其他姐妹找到穿搭灵感"
             images={form.outfit_urls}
             onUpload={() => handleUpload('outfit_urls')}
             onRemove={(i) => removeImage('outfit_urls', i)}
-            uploading={uploading}
+            uploading={uploadingField === 'outfit_urls'}
           />
 
           <Button
@@ -229,11 +291,13 @@ function ImageUploadField({ label, subtitle, images, onUpload, onRemove, uploadi
     <div>
       <Label className="text-sm font-medium">{label}</Label>
       {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+
       <div className="flex flex-wrap gap-3 mt-2">
         {images.map((url, i) => (
           <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden group">
             <img src={url} alt="" className="w-full h-full object-cover" />
             <button
+              type="button"
               onClick={() => onRemove(i)}
               className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
             >
@@ -241,7 +305,9 @@ function ImageUploadField({ label, subtitle, images, onUpload, onRemove, uploadi
             </button>
           </div>
         ))}
+
         <button
+          type="button"
           onClick={onUpload}
           disabled={uploading}
           className="w-20 h-20 rounded-xl border-2 border-dashed border-border hover:border-foreground/30 flex flex-col items-center justify-center text-muted-foreground transition-colors"
@@ -255,4 +321,5 @@ function ImageUploadField({ label, subtitle, images, onUpload, onRemove, uploadi
       </div>
     </div>
   );
+}
 }
