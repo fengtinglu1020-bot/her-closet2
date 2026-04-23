@@ -1,0 +1,85 @@
+{
+  "name": "Item",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "\u5546\u54c1\u540d\u79f0"
+    },
+    "price": {
+      "type": "number",
+      "description": "\u4ef7\u683c\uff08\u5143\uff09"
+    },
+    "size": {
+      "type": "string",
+      "description": "\u5c3a\u7801"
+    },
+    "wear_count": {
+      "type": "number",
+      "description": "\u7a7f\u7740\u6b21\u6570"
+    },
+    "wash_count": {
+      "type": "number",
+      "description": "\u6d17\u6da4\u6b21\u6570"
+    },
+    "location": {
+      "type": "string",
+      "description": "\u51fa\u7247\u5730\u70b9"
+    },
+    "style_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u98ce\u683c\u6807\u7b7e"
+    },
+    "scene_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u51fa\u7247\u573a\u666f"
+    },
+    "season_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u9002\u5408\u5b63\u8282"
+    },
+    "photo_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u5b9e\u7269\u56fe\u7247"
+    },
+    "outfit_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u51fa\u7247\u56fe"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "available",
+        "reserved",
+        "sold"
+      ],
+      "default": "available",
+      "description": "\u5546\u54c1\u72b6\u6001"
+    },
+    "favorites_count": {
+      "type": "number",
+      "default": 0,
+      "description": "\u6536\u85cf\u6570"
+    }
+  },
+  "required": [
+    "name",
+    "price",
+    "size"
+  ]
+}
