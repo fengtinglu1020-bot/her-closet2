@@ -1,0 +1,132 @@
+我会分三阶段
+第一阶段（现在）
+
+先做 Rule-based Recommendation
+
+根本不用 AI。
+
+你发布商品的时候已经有：
+
+style_tags
+scene_tags
+season_tags
+
+例如：
+
+style:
+Minimalist
+
+scene:
+Office
+
+season:
+Summer
+
+那推荐逻辑直接：
+
+同 style_tags
++
+同 scene_tags
++
+同 season_tags
+
+给一个简单分数：
+
+匹配style +3
+匹配scene +2
+匹配season +1
+
+然后排序。
+
+这就已经比很多创业项目上线时强了。
+
+第二阶段（用户 100+）
+
+开始做 AI Embedding
+
+你们每个商品都有：
+
+标题
+描述
+标签
+
+例如：
+
+White Linen Blazer
+Minimalist Summer Office Look
+
+然后：
+
+OpenAI Embedding
+或者
+Gemini Embedding
+
+生成：
+
+1536维向量
+
+存进 Supabase。
+
+之后：
+
+相似度搜索
+
+推荐。
+
+这个时候才叫 AI 推荐。
+
+第三阶段（用户 1000+）
+
+做你最开始说的：
+
+AI Outfit Matching
+
+用户输入：
+
+我要去哈佛orientation
+天气28度
+想要专业但不要太正式
+
+AI输出：
+
+Closet里的A上衣
++
+Closet里的B裤子
++
+Marketplace里的C包包
+
+这种才是你当时想做的东西。
+
+如果我是你
+
+下一步优先级：
+
+1 Favorites ✅
+2 Seller Profile
+3 Chat / Message
+4 Purchase Request
+5 Vercel上线
+6 邀请10个朋友测试
+7 AI推荐
+
+原因很简单：
+
+如果现在数据库里只有 5 件衣服。
+
+AI 再聪明：
+
+5件衣服
+还是5件衣服
+
+不会产生价值。
+
+但如果你有：
+
+100件衣服
+10个用户
+
+哪怕只是：
+
+同风格推荐
+
+用户都觉得很好用了。
