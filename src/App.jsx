@@ -11,6 +11,12 @@ import InspirationDetail from './pages/InspirationDetail'
 import DestinationDetail from './pages/DestinationDetail'
 import Profile from './pages/Profile'
 import Orders from './pages/Orders'
+import Login from './pages/Login'
+import MyCloset from './pages/MyCloset'
+import Favorites from './pages/Favorites'
+import MessageThread from './pages/MessageThread'
+import Messages from './pages/Messages'
+import SearchPage from './pages/Search'
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -45,6 +51,12 @@ const AuthenticatedApp = () => {
       <Route path="/destination/:slug" element={<DestinationDetail />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/orders" element={<Orders />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/my-closet" element={<MyCloset />} />
+      <Route path="/favorites" element={<Favorites />} />
+      <Route path="/messages/:conversationId" element={<MessageThread />} />
+      <Route path="/messages" element={<Messages />} />
+      <Route path="/search" element={<SearchPage />} />
     </Routes>
   );
 };

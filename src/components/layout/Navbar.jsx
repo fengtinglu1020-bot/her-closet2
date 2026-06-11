@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Menu, X, Sparkles, User } from 'lucide-react';
+import { Search, Menu, X, Sparkles, User, LogOut } from 'lucide-react';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function Navbar({ onPostItem }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated, logout } = useAuth();
 
   const navLinks = [
     { label: '风格', sectionId: 'style-section' },
@@ -58,16 +60,29 @@ export default function Navbar({ onPostItem }) {
           </div>
 
           <div className="hidden md:flex items-center gap-2">
-            <button className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary transition-colors">
+            <button
+              onClick={() => navigate('/search')}
+              className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary transition-colors"
+            >
               <Search className="w-4 h-4" />
             </button>
 
             <Link
-              to="/profile"
+              to={isAuthenticated ? '/profile' : '/login'}
               className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary transition-colors"
             >
               <User className="w-4 h-4" />
             </Link>
+
+            {isAuthenticated && (
+              <button
+                onClick={logout}
+                className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary transition-colors"
+                title="退出登录"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            )}
 
             <Button
     onClick={onPostItem}
@@ -95,6 +110,13 @@ export default function Navbar({ onPostItem }) {
             className="md:hidden border-t border-border/40 bg-background overflow-hidden"
           >
             <div className="px-4 py-4 space-y-1">
+              <button
+                className="flex items-center gap-2 w-full px-4 py-3 text-sm text-left rounded-xl hover:bg-secondary transition-colors"
+                onClick={() => { navigate('/search'); setMobileOpen(false); }}
+              >
+                <Search className="w-4 h-4" />
+                搜索
+              </button>
               {navLinks.map((link) => (
                 <button
                   key={link.label}

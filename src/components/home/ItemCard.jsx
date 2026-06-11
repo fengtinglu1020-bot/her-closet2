@@ -1,11 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/lib/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'sonner';
 
-export default function ItemCard({ item, index = 0 }) {
-  const [liked, setLiked] = useState(false);
+export default function ItemCard({ item, index = 0, isFavorited = false, onToggleFavorite }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [liked, setLiked] = useState(isFavorited);
+  const [toggling, setToggling] = useState(false);
+
+  // Sync with parent-supplied isFavorited (e.g. after data reload)
+  useEffect(() => {
+    setLiked(isFavorited);
+  }, [isFavorited]);
+
+  const handleFavorite = async (e) => {
+    e.preventDefault();
+
+    if (!user) {
+      toast.error('请先登录后收藏');
+      navigate('/login');
+      return;
+    }
+
+    if (toggling) return;
+
+    const next = !liked;
+    setLiked(next); // optimistic update
+    setToggling(true);
+
+    try {
+      if (next) {
+        await supabase.from('favorites').insert({ user_id: user.id, item_id: item.id });
+      } else {
+        await supabase.from('favorites').delete()
+          .eq('user_id', user.id)
+          .eq('item_id', item.id);
+      }
+      onToggleFavorite?.(item.id, next);
+    } catch (err) {
+      console.error('Favorite toggle failed:', err);
+      setLiked(!next); // revert on error
+    } finally {
+      setToggling(false);
+    }
+  };
 
   const mainImage = item.photo_urls?.[0] || item.outfit_urls?.[0];
   const hasOutfit = item.outfit_urls?.length > 0;
@@ -34,7 +77,8 @@ export default function ItemCard({ item, index = 0 }) {
 
           {/* Favorite button */}
           <button
-            onClick={(e) => { e.preventDefault(); setLiked(!liked); }}
+            onClick={handleFavorite}
+            disabled={toggling}
             className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center transition-transform hover:scale-110"
           >
             <Heart

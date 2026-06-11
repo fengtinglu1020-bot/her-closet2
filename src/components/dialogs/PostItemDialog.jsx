@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from '@/lib/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -34,6 +37,8 @@ export default function PostItemDialog({ open, onOpenChange }) {
   const [form, setForm] = useState(emptyForm);
   const [uploadingField, setUploadingField] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const toggleTag = (field, tag) => {
     setForm((prev) => ({
@@ -58,16 +63,24 @@ export default function PostItemDialog({ open, onOpenChange }) {
         setUploadingField(field);
 
         const urls = await Promise.all(
-          files.map(
-            (file) =>
-              new Promise((resolve, reject) => {
-                const reader = new FileReader();
+          files.map(async (file) => {
+            const ext = file.name.split('.').pop();
+            const filePath = `${field}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = () => reject(new Error('图片读取失败'));
-                reader.readAsDataURL(file);
-              })
-          )
+            const { error: uploadError } = await supabase
+              .storage
+              .from('items')
+              .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data } = supabase
+              .storage
+              .from('items')
+              .getPublicUrl(filePath);
+
+            return data.publicUrl;
+          })
         );
 
         setForm((prev) => ({
@@ -92,7 +105,14 @@ export default function PostItemDialog({ open, onOpenChange }) {
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!isAuthenticated) {
+      toast.error('请先登录后再发布商品');
+      onOpenChange(false);
+      navigate('/login');
+      return;
+    }
+
     if (!form.name || !form.price || !form.size) {
       toast.error('请填写必填项');
       return;
@@ -106,26 +126,28 @@ export default function PostItemDialog({ open, onOpenChange }) {
     try {
       setSubmitting(true);
 
-      const newItem = {
-        id: Date.now(),
-        name: form.name.trim(),
-        price: parseFloat(form.price),
-        size: form.size.trim(),
-        wear_count: form.wear_count ? parseInt(form.wear_count, 10) : 0,
-        wash_count: form.wash_count ? parseInt(form.wash_count, 10) : 0,
-        location: form.location.trim(),
-        style_tags: form.style_tags,
-        scene_tags: form.scene_tags,
-        season_tags: form.season_tags,
-        photo_urls: form.photo_urls,
-        outfit_urls: form.outfit_urls,
-        created_at: new Date().toISOString(),
+      const payload = {
+          name:        form.name.trim(),
+          price:       parseFloat(form.price),
+          size:        form.size.trim(),
+          wear_count:  form.wear_count ? parseInt(form.wear_count, 10) : 0,
+          wash_count:  form.wash_count ? parseInt(form.wash_count, 10) : 0,
+          location:    form.location.trim(),
+          style_tags:  form.style_tags,
+          scene_tags:  form.scene_tags,
+          season_tags: form.season_tags,
+          photo_urls:  form.photo_urls,
+          outfit_urls: form.outfit_urls,
+          seller_id:   user.id,
       };
 
-      const oldItems = JSON.parse(localStorage.getItem('items') || '[]');
-      const updatedItems = [newItem, ...oldItems];
+      const { error } = await supabase
+        .from('items')
+        .insert(payload)
+        .select()
+        .single();
 
-      localStorage.setItem('items', JSON.stringify(updatedItems));
+      if (error) throw new Error(error.message);
 
       toast.success('发布成功！');
       setForm(emptyForm);
