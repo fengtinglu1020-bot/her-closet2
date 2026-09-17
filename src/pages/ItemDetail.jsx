@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/lib/AuthContext';
 import { toast } from 'sonner';
+import SafetyGuideDialog from '@/components/dialogs/SafetyGuideDialog';
 
 export default function ItemDetail() {
   const { id } = useParams();
@@ -19,7 +20,8 @@ export default function ItemDetail() {
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
-  const [ordering, setOrdering] = useState(false);
+  const [safetyOpen, setSafetyOpen] = useState(false);
+  const [pendingNav, setPendingNav] = useState(null);
 
   // Load existing favorite state once both item and user are available
   useEffect(() => {
@@ -83,44 +85,21 @@ export default function ItemDetail() {
     }
   };
 
-  const handleBuy = async () => {
+  const handleBuy = () => {
     if (!user) {
       toast.error('请先登录');
       navigate('/login');
       return;
     }
-    if (ordering) return;
+    setPendingNav(`/messages/${item.seller_id}__${item.id}`);
+    setSafetyOpen(true);
+  };
 
-    try {
-      setOrdering(true);
-
-      // Duplicate check: block if buyer already has a pending or accepted order for this item
-      const { data: existing } = await supabase
-        .from('orders')
-        .select('id')
-        .eq('buyer_id', user.id)
-        .eq('item_id', item.id)
-        .in('status', ['pending', 'accepted'])
-        .maybeSingle();
-
-      if (existing) {
-        toast.error('你已经发送过购买请求了');
-        return;
-      }
-
-      const { error } = await supabase.from('orders').insert({
-        buyer_id:  user.id,
-        seller_id: item.seller_id,
-        item_id:   item.id,
-      });
-
-      if (error) throw error;
-      toast.success('购买请求已发送，等待卖家确认');
-    } catch (err) {
-      console.error('下单失败:', err);
-      toast.error('下单失败，请重试');
-    } finally {
-      setOrdering(false);
+  const closeSafety = () => {
+    setSafetyOpen(false);
+    if (pendingNav) {
+      navigate(pendingNav);
+      setPendingNav(null);
     }
   };
 
@@ -168,17 +147,22 @@ export default function ItemDetail() {
   return (
     <div className="min-h-screen bg-background">
       <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-4 h-4" />
+        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 flex items-stretch justify-between" style={{minHeight: '56px'}}>
+          <button
+            type="button"
+            onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')}
+            className="flex items-center gap-2 px-4 py-4 text-sm text-muted-foreground hover:text-foreground active:bg-secondary transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
             返回
-          </Link>
-          <div className="flex items-center gap-3">
-            <button type="button" onClick={handleLike} disabled={likeToggling}>
-              <Heart className={`w-5 h-5 ${liked ? 'fill-red-400 text-red-400' : 'text-muted-foreground'}`} />
+          </button>
+          <div className="flex items-stretch gap-0">
+            <button type="button" onClick={handleLike} disabled={likeToggling} className="flex items-center justify-center px-4 py-4 active:bg-secondary transition-colors">
+              <Heart className={`w-6 h-6 ${liked ? 'fill-red-400 text-red-400' : 'text-muted-foreground'}`} />
             </button>
             <button
               type="button"
+              className="flex items-center justify-center px-4 py-4 active:bg-secondary transition-colors"
               onClick={() => {
                 if (navigator.share) {
                   navigator.share({
@@ -192,8 +176,9 @@ export default function ItemDetail() {
                 }
               }}
             >
-              <Share2 className="w-5 h-5 text-muted-foreground" />
+              <Share2 className="w-6 h-6 text-muted-foreground" />
             </button>
+
           </div>
         </div>
       </div>
@@ -207,7 +192,7 @@ export default function ItemDetail() {
           >
             {allImages.length > 0 ? (
               <>
-                <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-secondary">
+                <div className="aspect-[3/4] md:aspect-auto md:h-[420px] rounded-2xl overflow-hidden bg-secondary">
                   <img
                     src={allImages[activeImage]}
                     alt={item.name}
@@ -329,23 +314,6 @@ export default function ItemDetail() {
                 <Button
                   className="flex-1 h-12 rounded-xl bg-foreground text-background hover:bg-foreground/90 font-medium"
                   onClick={handleBuy}
-                  disabled={ordering}
-                >
-                  {ordering ? '发送中…' : '立即购买'}
-                </Button>
-              )}
-              {item.seller_id && user?.id !== item.seller_id && (
-                <Button
-                  variant="outline"
-                  className="h-12 px-6 rounded-xl"
-                  onClick={() => {
-                    if (!user) {
-                      toast.error('请先登录后联系卖家');
-                      navigate('/login');
-                      return;
-                    }
-                    navigate(`/messages/${item.seller_id}__${item.id}`);
-                  }}
                 >
                   <MessageSquare className="w-4 h-4 mr-2" />
                   联系卖家
@@ -363,9 +331,17 @@ export default function ItemDetail() {
                 </Button>
               )}
             </div>
+
+            {user?.id !== item.seller_id && (
+              <p className="text-xs text-muted-foreground border-l-2 border-border pl-3 leading-relaxed mt-4">
+                交易提醒：Her Closet 暂不托管付款。请通过私信确认商品状态、价格与交付方式，避免提前转账或支付大额定金。
+              </p>
+            )}
           </motion.div>
         </div>
       </div>
+
+      <SafetyGuideDialog open={safetyOpen} onClose={closeSafety} />
     </div>
   );
 }

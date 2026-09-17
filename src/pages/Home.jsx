@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import HeroSection from '@/components/home/HeroSection';
 import DestinationGrid from '@/components/home/DestinationGrid';
@@ -8,9 +8,21 @@ import InspirationSection from '@/components/home/InspirationSection';
 import CTABanner from '@/components/home/CTABanner';
 import Footer from '@/components/layout/Footer';
 import PostItemDialog from '@/components/dialogs/PostItemDialog';
+import SafetyGuideDialog from '@/components/dialogs/SafetyGuideDialog';
 
 export default function Home() {
   const [postDialogOpen, setPostDialogOpen] = useState(false);
+  const [safetyOpen, setSafetyOpen] = useState(false);
+
+  useEffect(() => {
+    const seen = localStorage.getItem('hc_safety_seen');
+    if (!seen) setSafetyOpen(true);
+  }, []);
+
+  const closeSafety = () => {
+    localStorage.setItem('hc_safety_seen', '1');
+    setSafetyOpen(false);
+  };
 
   const scrollToRecommended = () => {
     document.getElementById('recommended')?.scrollIntoView({ behavior: 'smooth' });
@@ -25,30 +37,17 @@ export default function Home() {
         onPostItem={() => setPostDialogOpen(true)}
       />
 
-      {/* 场景（你现在 DestinationGrid 可以当“场景”） */}
-      <div id="scene-section" className="scroll-mt-24">
-        <DestinationGrid />
-      </div>
-
-      {/* AI 搭配 */}
-      <div id="ai-section" className="scroll-mt-24">
-        <AIStylerSection />
-      </div>
-
-      {/* 推荐（你原本就有） */}
       <div id="recommended" className="scroll-mt-24">
         <RecommendedSection />
       </div>
 
-      {/* 这里暂时拿 Inspiration 当风格 */}
-      <div id="style-section" className="scroll-mt-24">
-        <InspirationSection />
-      </div>
+      <AIStylerSection />
 
-      {/* 这里先临时当“季节”（后面可以单独做模块） */}
-      <div id="season-section" className="scroll-mt-24">
-        <CTABanner onPostItem={() => setPostDialogOpen(true)} />
-      </div>
+      <InspirationSection />
+
+      <DestinationGrid />
+
+      <CTABanner onPostItem={() => setPostDialogOpen(true)} />
 
       <Footer />
 
@@ -56,6 +55,8 @@ export default function Home() {
         open={postDialogOpen}
         onOpenChange={setPostDialogOpen}
       />
+
+      <SafetyGuideDialog open={safetyOpen} onClose={closeSafety} />
     </div>
   );
 }

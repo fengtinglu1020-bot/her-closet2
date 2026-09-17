@@ -1,94 +1,126 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabaseClient';
 
-const INSPIRATIONS = [
+const FALLBACK = [
   {
-    title: '三亚海边出片日记',
-    subtitle: '买家晒单 · 法式碎花裙',
-    image:
-      'https://media.base44.com/images/public/69e9a85f2f4419a5ac4fc769/05d384165_generated_d7ed6259.png',
-    slug: 'sanya-diary',
+    location: '坎昆',
+    detail: '海边度假风',
+    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
   },
   {
-    title: '日落海滩拍照灵感',
-    subtitle: '买家晒单 · 白色吊带裙',
-    image:
-      'https://media.base44.com/images/public/69e9a85f2f4419a5ac4fc769/31b9194dc_generated_2da471ec.png',
-    slug: 'sunset-diary',
+    location: '马德里',
+    detail: '欧式街头风',
+    image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=800&q=80',
   },
   {
-    title: '巴厘岛度假穿搭记录',
-    subtitle: '买家晒单 · 碧蓝套装',
-    image:
-      'https://media.base44.com/images/public/69e9a85f2f4419a5ac4fc769/b375de800_generated_fc505c93.png',
-    slug: 'bali-diary',
+    location: '纽约',
+    detail: '都市复古风',
+    image: 'https://images.unsplash.com/photo-1499092346589-b9b6be3e94b2?auto=format&fit=crop&w=800&q=80',
   },
 ];
 
-export default function InspirationSection() {
-  return (
-    <section className="py-16 sm:py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-10">
-          <div>
-            <h2 className="font-display text-4xl sm:text-5xl font-black tracking-tight uppercase">
-              出片灵感
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground font-serif italic">
-              看看大家买到衣服之后，是怎么穿去旅行、怎么拍出片的
-            </p>
-          </div>
+function parseLocation(raw) {
+  const parts = raw.split(/[,，·\-\/]/);
+  return { main: parts[0].trim(), detail: parts.slice(1).join(', ').trim() };
+}
 
-          <Link to="/inspiration/sanya-diary">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              查看更多
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-          </Link>
+export default function InspirationSection() {
+  const [cards, setCards] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    async function load() {
+      const { data } = await supabase
+        .from('items')
+        .select('location, photo_urls, outfit_urls, name')
+        .not('location', 'is', null)
+        .neq('location', '');
+
+      if (!data || data.length === 0) { setCards(FALLBACK); return; }
+
+      // Group by location, keep best image per location
+      const map = {};
+      data.forEach(item => {
+        const loc = item.location.trim();
+        if (!loc) return;
+        if (!map[loc]) map[loc] = { count: 0, images: [] };
+        map[loc].count++;
+        const img = item.outfit_urls?.[0] || item.photo_urls?.[0];
+        if (img) map[loc].images.push(img);
+      });
+
+      const top = Object.entries(map)
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 3)
+        .map(([loc, val]) => {
+          const { main, detail } = parseLocation(loc);
+          return {
+            location: main,
+            detail: detail || `${val.count} 件穿搭`,
+            raw: loc,
+            image: val.images[0] || null,
+            count: val.count,
+          };
+        });
+
+      if (top.length < 3) {
+        setCards([...top, ...FALLBACK.slice(top.length)]);
+      } else {
+        setCards(top);
+      }
+    }
+    load();
+  }, []);
+
+  return (
+    <section id="style-section" className="py-16 sm:py-20 scroll-mt-0">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-10">
+          <h2 className="font-display text-4xl sm:text-5xl font-black tracking-tight uppercase">
+            旅行穿搭灵感
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground font-serif italic">
+            来自真实用户的出行穿搭
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
-          {INSPIRATIONS.map((item, i) => (
+          {cards.map((item, i) => (
             <motion.div
-              key={item.slug}
+              key={item.location + i}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.12, duration: 0.6 }}
             >
-              <Link
-                to={`/inspiration/${item.slug}`}
-                className="group relative block aspect-[4/5] rounded-2xl overflow-hidden"
+              <button
+                onClick={() => navigate(`/search?q=${encodeURIComponent(item.raw || item.location)}`)}
+                className="group relative block w-full aspect-[4/5] rounded-2xl overflow-hidden text-left"
               >
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-
+                {item.image ? (
+                  <img
+                    src={item.image}
+                    alt={item.location}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-secondary" />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
-
                 <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
-                  <div className="inline-flex items-center rounded-full bg-white/15 backdrop-blur-sm px-2.5 py-1 text-[10px] sm:text-xs text-white/90 mb-3">
-                    买家出片
+                  <div className="inline-flex items-center rounded-full bg-white/15 backdrop-blur-sm px-2.5 py-1 text-[10px] sm:text-xs text-white/90 mb-3 tracking-wide">
+                    HER CLOSET 编辑精选
                   </div>
-
-                  <h3 className="text-white font-serif font-semibold text-sm sm:text-base mb-1">
-                    {item.title}
+                  <h3 className="text-white font-serif font-semibold text-lg leading-tight">
+                    {item.location}
                   </h3>
-
-                  <p className="text-white/75 text-xs sm:text-sm">
-                    {item.subtitle}
-                  </p>
+                  {item.detail && (
+                    <p className="text-white/65 text-xs mt-1">{item.detail}</p>
+                  )}
                 </div>
-              </Link>
+              </button>
             </motion.div>
           ))}
         </div>

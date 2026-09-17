@@ -15,14 +15,16 @@ import { Badge } from '@/components/ui/badge';
 import { Upload, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 
-const STYLE_TAGS = ['法式', 'Y2K', 'Boho', '复古', '甜美', '休闲'];
-const SCENE_TAGS = ['海边', '日落', '城市街拍', '山野', '度假村', '文艺街区'];
+const CATEGORIES = ['上衣', '下装', '连衣裙', '外套', '配饰', '鞋子', '包包', '其他'];
+const STYLE_TAGS = ['法式', 'Y2K', 'Boho', '复古', '甜美', '休闲', '其他'];
+const SCENE_TAGS = ['海边', '日落', '城市街拍', '山野', '度假村', '文艺街区', '其他'];
 const SEASON_TAGS = ['春', '夏', '秋', '冬'];
 
 export default function PostItemDialog({ open, onOpenChange }) {
   const emptyForm = {
     name: '',
     price: '',
+    category: '',
     size: '',
     wear_count: '',
     wash_count: '',
@@ -113,8 +115,8 @@ export default function PostItemDialog({ open, onOpenChange }) {
       return;
     }
 
-    if (!form.name || !form.price || !form.size) {
-      toast.error('请填写必填项');
+    if (!form.name || !form.price || !form.category) {
+      toast.error('请填写必填项（名称、价格、品类）');
       return;
     }
 
@@ -129,6 +131,7 @@ export default function PostItemDialog({ open, onOpenChange }) {
       const payload = {
           name:        form.name.trim(),
           price:       parseFloat(form.price),
+          category:    form.category,
           size:        form.size.trim(),
           wear_count:  form.wear_count ? parseInt(form.wear_count, 10) : 0,
           wash_count:  form.wash_count ? parseInt(form.wash_count, 10) : 0,
@@ -176,6 +179,26 @@ export default function PostItemDialog({ open, onOpenChange }) {
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               className="mt-1.5 h-11 rounded-xl"
             />
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium">品类 *</Label>
+            <div className="flex flex-wrap gap-2 mt-1.5">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setForm({ ...form, category: form.category === cat ? '' : cat })}
+                  className={`px-3.5 py-1.5 rounded-full text-sm border transition-all ${
+                    form.category === cat
+                      ? 'bg-foreground text-background border-foreground'
+                      : 'bg-background border-border text-foreground hover:border-foreground/40'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -238,6 +261,10 @@ export default function PostItemDialog({ open, onOpenChange }) {
             tags={STYLE_TAGS}
             selected={form.style_tags}
             onToggle={(t) => toggleTag('style_tags', t)}
+            onCustom={(val) => setForm(prev => ({
+              ...prev,
+              style_tags: [...prev.style_tags.filter(t => t !== '其他'), val].filter(Boolean),
+            }))}
           />
 
           <TagGroup
@@ -245,6 +272,10 @@ export default function PostItemDialog({ open, onOpenChange }) {
             tags={SCENE_TAGS}
             selected={form.scene_tags}
             onToggle={(t) => toggleTag('scene_tags', t)}
+            onCustom={(val) => setForm(prev => ({
+              ...prev,
+              scene_tags: [...prev.scene_tags.filter(t => t !== '其他'), val].filter(Boolean),
+            }))}
           />
 
           <TagGroup
@@ -284,7 +315,14 @@ export default function PostItemDialog({ open, onOpenChange }) {
   );
 }
 
-function TagGroup({ label, tags, selected, onToggle }) {
+function TagGroup({ label, tags, selected, onToggle, onCustom }) {
+  const [customVal, setCustomVal] = React.useState('');
+  const otherSelected = selected.includes('其他');
+
+  const handleCustomBlur = () => {
+    if (customVal.trim()) onCustom(customVal.trim());
+  };
+
   return (
     <div>
       <Label className="text-sm font-medium">{label}</Label>
@@ -304,6 +342,17 @@ function TagGroup({ label, tags, selected, onToggle }) {
           </Badge>
         ))}
       </div>
+      {otherSelected && onCustom && (
+        <Input
+          placeholder="描述你的风格关键词，例如：哥特、辣妹…"
+          value={customVal}
+          onChange={(e) => setCustomVal(e.target.value)}
+          onBlur={handleCustomBlur}
+          onKeyDown={(e) => e.key === 'Enter' && handleCustomBlur()}
+          className="mt-2 h-10 rounded-xl text-sm"
+          autoFocus
+        />
+      )}
     </div>
   );
 }

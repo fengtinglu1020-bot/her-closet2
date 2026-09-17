@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import SafetyGuideDialog from '@/components/dialogs/SafetyGuideDialog';
 
 export default function Footer() {
+  const [safetyOpen, setSafetyOpen] = useState(false);
+
   return (
     <footer className="border-t border-border/50 bg-secondary/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
@@ -29,13 +32,21 @@ export default function Footer() {
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-3">关于</h4>
             <ul className="space-y-2">
-              {['关于我们', '用户协议', '隐私政策', '帮助中心'].map((item) => (
+              {['关于我们', '隐私政策', '帮助中心'].map((item) => (
                 <li key={item}>
                   <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                     {item}
                   </Link>
                 </li>
               ))}
+              <li>
+                <button
+                  onClick={() => setSafetyOpen(true)}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  用户协议
+                </button>
+              </li>
             </ul>
           </div>
           <div>
@@ -61,6 +72,8 @@ export default function Footer() {
           </p>
         </div>
       </div>
+
+      <SafetyGuideDialog open={safetyOpen} onClose={() => setSafetyOpen(false)} />
     </footer>
   );
 }

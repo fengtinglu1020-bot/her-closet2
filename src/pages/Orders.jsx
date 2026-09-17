@@ -78,6 +78,15 @@ export default function Orders() {
 
       const labels = { accepted: '已接受', declined: '已拒绝', cancelled: '已取消', completed: '已完成' };
       toast.success(labels[status] || '已更新');
+
+      const notifyType = { accepted: 'order_accepted', declined: 'order_declined', completed: 'order_completed' }[status];
+      if (notifyType) {
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-notification-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: notifyType, orderId }),
+        }).catch(console.error);
+      }
     } catch (err) {
       console.error('更新订单失败:', err);
       toast.error('操作失败，请重试');
@@ -110,6 +119,9 @@ export default function Orders() {
           </h1>
           <p className="mt-3 text-sm text-muted-foreground">
             查看你发出和收到的购买请求。
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground/70">
+            订单状态仅用于记录双方意向，不代表平台已完成付款或担保交易。
           </p>
         </div>
 

@@ -76,15 +76,20 @@ export default function MessageThread() {
     if (!text || sending) return;
     try {
       setSending(true);
-      const { error } = await supabase.from('messages').insert({
-        sender_id:   user.id,
-        receiver_id: otherUserId,
-        item_id:     itemId,
-        content:     text,
-      });
+      const { data: newMsg, error } = await supabase
+        .from('messages')
+        .insert({ sender_id: user.id, receiver_id: otherUserId, item_id: itemId, content: text })
+        .select()
+        .single();
       if (error) throw error;
       setContent('');
       await loadMessages();
+
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-notification-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'new_message', messageId: newMsg.id }),
+      }).catch(console.error);
     } catch (err) {
       console.error('发送失败:', err);
     } finally {
@@ -119,7 +124,7 @@ export default function MessageThread() {
                   className="w-8 h-8 rounded-lg object-cover"
                 />
               )}
-              <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
+              <span className="text-sm font-medium text-foreground truncate max-w-[40vw]">
                 {item.name}
               </span>
             </Link>
@@ -162,6 +167,9 @@ export default function MessageThread() {
 
       {/* Input bar */}
       <div className="sticky bottom-0 bg-background/90 backdrop-blur-xl border-t border-border/50">
+        <p className="max-w-3xl mx-auto px-4 sm:px-6 pt-2.5 text-xs text-muted-foreground/70 leading-relaxed">
+          安全提醒：请勿轻信站外链接，确认商品与收款信息后再付款。建议优先选择可追踪的交易方式。
+        </p>
         <form onSubmit={handleSend} className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex gap-3">
           <input
             type="text"

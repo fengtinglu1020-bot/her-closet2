@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Menu, X, Sparkles, User, LogOut } from 'lucide-react';
+import { Search, Menu, X, Sparkles, User, LogOut, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function Navbar({ onPostItem }) {
@@ -12,10 +12,9 @@ export default function Navbar({ onPostItem }) {
   const { isAuthenticated, logout } = useAuth();
 
   const navLinks = [
+    { label: 'AI 搭配', sectionId: 'ai-section', icon: <Sparkles className="w-3 h-3" /> },
     { label: '风格', sectionId: 'style-section' },
     { label: '场景', sectionId: 'scene-section' },
-    { label: '季节', sectionId: 'season-section' },
-    { label: 'AI 搭配', sectionId: 'ai-section', icon: <Sparkles className="w-3 h-3" /> },
   ];
 
   const scrollToSection = (sectionId) => {
@@ -31,6 +30,20 @@ export default function Navbar({ onPostItem }) {
       setTimeout(doScroll, 200);
     } else {
       doScroll();
+    }
+  };
+
+  const handleMobileSectionClick = (sectionId) => {
+    setMobileOpen(false);
+    if (location.pathname !== '/') {
+      navigate('/');
+      setTimeout(() => {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
+    } else {
+      setTimeout(() => {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
     }
   };
 
@@ -92,12 +105,20 @@ export default function Navbar({ onPostItem }) {
   </Button>
 </div>
 
-          <button
-            className="md:hidden p-2 text-foreground"
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          <div className="md:hidden flex items-center gap-1">
+            <Link
+              to={isAuthenticated ? '/profile' : '/login'}
+              className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary transition-colors"
+            >
+              <User className="w-4 h-4" />
+            </Link>
+            <button
+              className="p-2 text-foreground"
+              onClick={() => setMobileOpen(!mobileOpen)}
+            >
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -121,15 +142,21 @@ export default function Navbar({ onPostItem }) {
                 <button
                   key={link.label}
                   className="flex items-center gap-2 w-full px-4 py-3 text-sm text-left rounded-xl hover:bg-secondary transition-colors"
-                  onClick={() => {
-                    scrollToSection(link.sectionId);
-                    setMobileOpen(false);
-                  }}
+                  onClick={() => handleMobileSectionClick(link.sectionId)}
                 >
                   {link.icon}
                   {link.label}
                 </button>
               ))}
+              {isAuthenticated && (
+                <button
+                  className="flex items-center gap-2 w-full px-4 py-3 text-sm text-left rounded-xl hover:bg-secondary transition-colors"
+                  onClick={() => { navigate('/messages'); setMobileOpen(false); }}
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  消息
+                </button>
+              )}
               <div className="pt-2">
                 <Button
                   onClick={() => {
@@ -140,6 +167,14 @@ export default function Navbar({ onPostItem }) {
                 >
                   发布闲置
                 </Button>
+                {isAuthenticated && (
+                  <button
+                    onClick={() => { logout(); setMobileOpen(false); }}
+                    className="w-full mt-2 px-4 py-2.5 text-sm text-muted-foreground text-center rounded-xl hover:bg-secondary transition-colors"
+                  >
+                    退出登录
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>

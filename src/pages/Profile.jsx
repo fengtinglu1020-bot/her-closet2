@@ -58,6 +58,14 @@ export default function Profile() {
 
   const menuItems = [
     {
+      title: 'Messages',
+      subtitle: '查看与买家或卖家的私信',
+      icon: <MessageSquare className="w-5 h-5" />,
+      count: messagesCount,
+      unread: messagesCount,
+      to: '/messages',
+    },
+    {
       title: 'Track Order',
       subtitle: '查看订单状态、物流和晒单入口',
       icon: <Package className="w-5 h-5" />,
@@ -70,14 +78,6 @@ export default function Profile() {
       icon: <Shirt className="w-5 h-5" />,
       count: closetCount,
       to: '/my-closet',
-    },
-    {
-      title: 'Messages',
-      subtitle: '查看与买家或卖家的私信',
-      icon: <MessageSquare className="w-5 h-5" />,
-      count: messagesCount,
-      unread: messagesCount,
-      to: '/messages',
     },
     {
       title: 'Favorites',
