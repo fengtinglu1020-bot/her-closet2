@@ -63,6 +63,21 @@ export default function MessageThread() {
 
   useEffect(() => {
     loadMessages();
+
+    // Real-time subscription
+    const channel = supabase
+      .channel(`messages-${otherUserId}-${itemId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `item_id=eq.${itemId}`,
+      }, () => {
+        loadMessages();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [user?.id, otherUserId, itemId]);
 
   // Scroll to latest message

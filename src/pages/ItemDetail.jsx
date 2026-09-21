@@ -192,11 +192,12 @@ export default function ItemDetail() {
           >
             {allImages.length > 0 ? (
               <>
-                <div className="aspect-[3/4] md:aspect-auto md:h-[420px] rounded-2xl overflow-hidden bg-secondary">
+                <div className="w-full rounded-2xl overflow-hidden bg-secondary" style={{maxHeight: '60vh'}}>
                   <img
                     src={allImages[activeImage]}
                     alt={item.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
+                    style={{maxHeight: '60vh'}}
                   />
                 </div>
                 {allImages.length > 1 && (
