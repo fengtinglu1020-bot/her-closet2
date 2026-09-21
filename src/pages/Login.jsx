@@ -28,17 +28,18 @@ export default function Login() {
       if (mode === 'login') {
         await signIn(email, password);
         toast.success('登录成功');
+        navigate('/');
       } else {
         await signUp(email, password);
-        // Send welcome email
-        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-notification-email`, {
+        toast.success('注册成功，欢迎来到 HerCloset ♡');
+        // Send welcome email before navigating
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-notification-email`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ type: 'welcome', email }),
         }).catch(console.error);
-        toast.success('注册成功，欢迎来到 HerCloset ♡');
+        navigate('/');
       }
-      navigate('/');
     } catch (err) {
       console.error(err);
       toast.error(err.message || '操作失败，请重试');
