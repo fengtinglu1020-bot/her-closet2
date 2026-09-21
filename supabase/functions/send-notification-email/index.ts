@@ -86,8 +86,38 @@ serve(async (req) => {
   const { type } = payload;
 
   try {
+    // ── welcome ────────────────────────────────────────────────────────────────
+    if (type === 'welcome') {
+      const { email } = payload;
+      if (!email) throw new Error('Missing email');
+      const username = email.split('@')[0];
+
+      await sendEmail(
+        email,
+        '欢迎来到 HerCloset｜你的衣橱，还有更多故事 ♡',
+        layout(`
+          <p style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111;">欢迎来到 HerCloset ♡</p>
+          <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.8;">
+            Hi ${username}，<br/><br/>
+            你的 HerCloset 账号已经注册成功。<br/>
+            很高兴在这里遇见你。
+          </p>
+          <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.8;">
+            在 HerCloset，我们希望每一件衣服都不只属于一次穿着、一次旅行，或一个人的衣橱。
+          </p>
+          <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.8;">
+            你可以在这里发现适合不同目的地、场景与风格的二手衣服，也可以把衣柜里不再穿、但依然很好的衣服，交给下一个喜欢它的人。
+          </p>
+          <p style="margin:0 0 32px;">${btn('去逛逛 HerCloset →', SITE_URL)}</p>
+          <p style="margin:0 0 4px;font-size:14px;color:#888;line-height:1.8;">希望你的下一件衣服，</p>
+          <p style="margin:0 0 20px;font-size:14px;color:#888;">也能拥有新的故事。</p>
+          <p style="margin:0;font-size:13px;color:#aaa;font-style:italic;">HerCloset · Same clothes. Different stories.</p>
+        `)
+      );
+    }
+
     // ── new_message ────────────────────────────────────────────────────────────
-    if (type === 'new_message') {
+    else if (type === 'new_message') {
       const { messageId } = payload;
       if (!messageId) throw new Error('Missing messageId');
 
