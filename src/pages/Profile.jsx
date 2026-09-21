@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Package,
@@ -7,13 +7,22 @@ import {
   MessageSquare,
   Heart,
   ChevronRight,
+  LogOut,
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
+import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    toast.success('已退出登录');
+    navigate('/');
+  };
   const [closetCount, setClosetCount] = useState(0);
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [messagesCount, setMessagesCount] = useState(0);
@@ -168,6 +177,21 @@ export default function Profile() {
               </div>
             </Link>
           ))}
+
+          <button
+            onClick={handleLogout}
+            className="group w-full flex items-center justify-between rounded-2xl border border-border/50 bg-background p-5 hover:bg-red-50 hover:border-red-100 transition-colors"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 rounded-2xl bg-secondary flex items-center justify-center text-muted-foreground group-hover:text-red-400 transition-colors">
+                <LogOut className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-muted-foreground group-hover:text-red-500 transition-colors">退出登录</h2>
+                <p className="text-sm text-muted-foreground mt-1">登出当前账号</p>
+              </div>
+            </div>
+          </button>
         </div>
       </div>
     </div>
